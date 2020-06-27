@@ -1,17 +1,17 @@
 @{
-    PSDependOptions = @{
+    PSDependOptions   = @{
         Target = 'CurrentUser'
     }
-    'Pester' = @{
-        Version = '4.9.0'
+    'Pester'          = @{
+        Version    = '5.0.2'
         Parameters = @{
             SkipPublisherCheck = $true
         }
     }
-    'psake' = @{
+    'psake'           = @{
         Version = '4.8.0'
     }
-    'BuildHelpers' = @{
+    'BuildHelpers'    = @{
         Version = '2.0.11'
     }
     'PowerShellBuild' = @{
