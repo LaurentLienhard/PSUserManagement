@@ -9,6 +9,7 @@ class USER {
     [System.String]$LastName
     [System.String]$DisplayName
     [System.String]$SamAccountName
+    [System.String]$Password
 
     #region <Constructor>
     user () {
@@ -17,15 +18,15 @@ class USER {
     USER ([System.String]$FirstName, [System.String]$LastName) {
         $This.FirstName = $this.FormatString($FirstName, "FIRSTUPPERCASE")
         $This.LastName = $this.FormatString($LastName, "UPPERCASE")
-        $This.DisplayName = $This.LastName + " " + $This.FirstName
+        $This.DisplayName = $this.LastName + " " + $this.FirstName
         $This.SamAccountName = $this.FirstName + "." + $this.LastName
     }
     #endregion <Constructor>
 
     #region <Method>
-    [Boolean] IsAdUserExist ([pscredential]$Credential, [system.string]$Server) {
+    [Boolean] IsAdUserExist ([System.String]$SamAccountName, [pscredential]$Credential, [system.string]$Server) {
         $GetParams = @{
-            Identity   = $This.SamAccountName
+            Identity   = $SamAccountName
             Credential = $Credential
             Server     = $Server
         }
@@ -37,6 +38,10 @@ class USER {
         catch {
             Return $false
         }
+    }
+
+    [void] GeneratePassword ([System.Int32]$Length, [System.Int32]$NbNonAlphaNumeric) {
+        $this.Password = [System.Web.Security.Membership]::GeneratePassword($Length, $NbNonAlphaNumeric)
     }
 
     [System.String] FormatString ([System.String]$Value, [FormatType]$Format) {
@@ -62,6 +67,18 @@ class USER {
     }
 
     #endregion <Method>
+}
+
+class USERHM : USER {
+    #region <Constructor>
+    USERHM () {
+    }
+
+    USERHM ([System.String]$FirstName, [System.String]$LastName) : base ($FirstName, $LastName) {
+
+        $This.SamAccountName = $this.LastName + " " + $this.FirstName
+    }
+    #endregion <Constructor>
 }
 
 
