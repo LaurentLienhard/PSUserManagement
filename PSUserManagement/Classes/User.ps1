@@ -23,8 +23,20 @@ class USER {
     #endregion <Constructor>
 
     #region <Method>
-    STATIC [void] CopyGroupFromTo([System.String]$CopyFrom, [System.String]$CopyTo) {
-        Get-ADUser -Identity $CopyFrom -Properties MemberOf | Select-Object -ExpandProperty MemberOf | Add-ADGroupMember -Members $CopyTo
+    [Boolean] IsAdUserExist ([pscredential]$Credential, [system.string]$Server) {
+        $GetParams = @{
+            Identity   = $This.SamAccountName
+            Credential = $Credential
+            Server     = $Server
+        }
+
+        try {
+            Get-ADUser @GetParams
+            return $true
+        }
+        catch {
+            Return $false
+        }
     }
 
     [System.String] FormatString ([System.String]$Value, [FormatType]$Format) {
