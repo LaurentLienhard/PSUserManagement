@@ -26,15 +26,23 @@ class USER {
     #region <Method>
     STATIC [Boolean] IsAdUserExist ([System.String]$SamAccountName, [pscredential]$Credential, [system.string]$Server) {
         $GetParams = @{
+            Identity   = $SamAccountName
+            Credential = $Credential
+            Server     = $Server
+        }
+
+        try {
+            Get-ADUser @GetParams
+            return $true
+        }
+        catch {
+            Return $false
+        }
+    }
+
+    STATIC [Boolean] IsAdUserExist ([System.String]$SamAccountName) {
+        $GetParams = @{
             Identity = $SamAccountName
-        }
-
-        if ($PSBoundParameters['Credential']) {
-            $GetParams.Add('Credential', $Credential)
-        }
-
-        if ($PSBoundParameters['Server']) {
-            $GetParams.Add('Server', $Server)
         }
 
         try {
