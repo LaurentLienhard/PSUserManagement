@@ -1,74 +1,144 @@
+// Available variables which can be used inside of strings.
+// ${workspaceFolder} - the path of the folder opened in VS Code
+//${workspaceFolderBasename} - the name of the folder opened in VS Code without any slashes (/)
+//${file} - the current opened file
+//${relativeFile} - the current opened file relative to workspaceFolder
+//${fileBasename} - the current opened file's basename
+//${fileBasenameNoExtension} - the current opened file's basename with no file extension
+//${fileDirname} - the current opened file's dirname
+//${fileExtname} - the current opened file's extension
+//${cwd} - the task runner's current working directory on startup
+//${lineNumber} - the current selected line number in the active file
+//${selectedText} - the current selected text in the active file
+//${execPath} - the path to the running VS Code executable
 {
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
     "version": "2.0.0",
-
-    // Start PowerShell (pwsh on *nix)
+    // Start PowerShell
     "windows": {
-        "options": {
-            "shell": {
-                "executable": "powershell.exe",
-                "args": [ "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command" ]
-            }
-        }
+        "command": "${env:windir}/System32/WindowsPowerShell/v1.0/powershell.exe",
+        "args": [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-command"
+        ]
     },
     "linux": {
-        "options": {
-            "shell": {
-                "executable": "/usr/bin/pwsh",
-                "args": [ "-NoProfile", "-Command" ]
-            }
-        }
+        "command": "/usr/bin/pwsh",
+        "args": [
+            "-NoProfile"
+        ]
     },
     "osx": {
-        "options": {
-            "shell": {
-                "executable": "/usr/local/bin/pwsh",
-                "args": [ "-NoProfile", "-Command" ]
-            }
-        }
+        "command": "/usr/local/bin/pwsh",
+        "args": [
+            "-NoProfile"
+        ]
     },
-
+    // The command is a shell script
+    "type": "shell",
+    // Show the output window always
+    "presentation": {
+        "echo": false,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+    },
+    // Associate with test task runner
     "tasks": [
         {
-            "label": "Clean",
+            "label": "AllPesterTest",
             "type": "shell",
-            "command": "${cwd}/build.ps1 -Task Clean -Verbose"
-        },
-        {
-            "label": "Test",
-            "type": "shell",
-            "command": "${cwd}/build.ps1 -Task Test -Verbose",
-            "group": {
-                "kind": "test",
-                "isDefault": true
+            "group": "test",
+            "presentation": {
+                "echo": false,
+                "reveal": "always",
+                "focus": true,
+                "panel": "dedicated",
+                "showReuseMessage": true,
+                "clear": true
             },
+            "command": "Write-Host 'Invoking Pester...'; $ProgressPreference = 'SilentlyContinue'; Invoke-Pester -PesterOption @{IncludeVSCodeMarker=$true};Invoke-Command { Write-Host 'Completed Test task in task runner.' }",
             "problemMatcher": "$pester"
         },
         {
-            "label": "Analyze",
+            "label": "Default",
             "type": "shell",
-            "command": "${cwd}/build.ps1 -Task Analyze -Verbose"
-        },
-        {
-            "label": "Pester",
-            "type": "shell",
-            "command": "${cwd}/build.ps1 -Task Pester -Verbose",
-            "problemMatcher": "$pester"
+            "group": "build",
+            "presentation": {
+                "echo": false,
+                "reveal": "always",
+                "focus": true,
+                "panel": "dedicated",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "command": "Write-Host 'Invoking default build scripts...'; ${workspaceFolder}/Build.ps1 -task default -bootstrap -verbose",
+            "problemMatcher": []
         },
         {
             "label": "Build",
             "type": "shell",
-            "command": "${cwd}/build.ps1 -Task Build -Verbose",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
+            "group": "build",
+            "presentation": {
+                "echo": false,
+                "reveal": "always",
+                "focus": true,
+                "panel": "dedicated",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "command": "Write-Host 'Invoking build scripts...'; ${workspaceFolder}/Build.ps1 -task build -bootstrap -verbose",
+            "problemMatcher": []
         },
         {
-            "label": "Publish",
+            "label": "PSScriptAnalyse",
             "type": "shell",
-            "command": "${cwd}/build.ps1 -Task Publish -Verbose"
+            "group": "build",
+            "presentation": {
+                "echo": false,
+                "reveal": "always",
+                "focus": true,
+                "panel": "dedicated",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "command": "Write-Host 'Invoking PSAnalyse scripts...'; ${workspaceFolder}/Build.ps1 -task PSAnalyse -bootstrap -verbose",
+            "problemMatcher": []
+        },
+        {
+            "label": "UnitTests",
+            "type": "shell",
+            "group": "build",
+            "presentation": {
+                "echo": false,
+                "reveal": "always",
+                "focus": true,
+                "panel": "dedicated",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "command": "Write-Host 'Invoking UnitTests scripts...'; ${workspaceFolder}/Build.ps1 -task test -bootstrap -verbose",
+            "problemMatcher": []
+        },
+        {
+            "label": "Helpify",
+            "type": "shell",
+            "group": "build",
+            "presentation": {
+                "echo": false,
+                "reveal": "always",
+                "focus": true,
+                "panel": "dedicated",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "command": "Write-Host 'Invoking UnitTests scripts...'; ${workspaceFolder}/Build.ps1 -task Helpify -bootstrap -verbose",
+            "problemMatcher": []
         }
     ]
 }

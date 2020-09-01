@@ -4,7 +4,7 @@
   "powershell.scriptAnalysis.enable": true,
   "powershell.integratedConsole.showOnStartup": true,
   "powershell.codeFormatting.preset": "Custom",
-  "powershell.codeFormatting.openBraceOnSameLine": true,
+  "powershell.codeFormatting.openBraceOnSameLine": false,
   "powershell.codeFormatting.newLineAfterOpenBrace": true,
   "powershell.codeFormatting.newLineAfterCloseBrace": true,
   "powershell.codeFormatting.whitespaceBeforeOpenBrace": true,

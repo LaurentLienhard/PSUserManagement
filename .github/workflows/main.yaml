@@ -1,0 +1,34 @@
+﻿name: "Launch Pester test action with job"
+
+on: [push]
+
+jobs:
+    Pester_Test_Job:
+        name: "Run Pester Test Job"
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [windows-latest,ubuntu-latest,macOS-latest]
+        steps:
+            - name: "CheckOut"
+              uses: actions/checkout@v2
+
+            - name: "Pester Test"
+              shell: pwsh
+              run: ./Build.ps1 -Task Test -Bootstrap -Verbose
+
+    Merge_Job:
+        name: "Merge job after pester test"
+        needs: Pester_Test_Job
+        runs-on: ubuntu-latest
+        steps:
+            - name: "CheckOut"
+              uses: actions/checkout@v2
+
+            - name: Merge to master branch
+              uses: devmasx/merge-branch@v1.1.0
+              with:
+                type: now
+                target_branch: 'master'
+              env:
+                GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
