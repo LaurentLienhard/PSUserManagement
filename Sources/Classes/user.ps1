@@ -1,5 +1,4 @@
-﻿#Generated at 09/01/2020 19:02:01 by LIENHARD Laurent
-enum FormatType
+﻿enum FormatType
 {
     UPPERCASE
     LOWERCASE
