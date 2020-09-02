@@ -43,9 +43,45 @@ class USER
         }
         else
         {
-            $objUser = New-Object System.Security.Principal.NTAccount($This.Domain, $This.SamAccountName)
-            $This.UID = $objUser.Translate([System.Security.Principal.SecurityIdentifier])
+            if ($This.IsAdUserExist())
+            {
+                $objUser = New-Object System.Security.Principal.NTAccount($This.Domain, $This.SamAccountName)
+                $This.UID = $objUser.Translate([System.Security.Principal.SecurityIdentifier])
+            }
+            else
+            {
+                Write-Warning "The user $($this.SamAccountName) does not exist in the Active Directory"
+            }
+
         }
+
+    }
+
+    [Double] GetVHDXProfileSize ([System.String]$Path)
+    {
+        if (!(Test-Path -Path $Path))
+        {
+            Write-Warning "The path passed in parameter cannot be found"
+            Break
+        }
+
+        if (!($This.UID))
+        {
+            $this.ConvertUser2UID()
+        }
+
+        $VHDXFileName = "UVHD-" + $this.UID + ".vhdx"
+        if (Get-ChildItem -Path $Path -Include $VHDXFileName)
+        {
+            $VHDXFullPath = (Join-Path -Path $Path -ChildPath $VHDXFileName)
+            return (Get-Item $VHDXFullPath).length / 1GB
+        }
+        else
+        {
+            Write-Warning "The profile file is not in the directory"
+            return 0
+        }
+
 
     }
 
@@ -75,10 +111,27 @@ class USER
         $array = @()
         $array += $Alphabets.Split(',') | Get-Random -Count $NumberOfAlphabets
         $array[0] = $array[0].ToUpper()
-        $array[-1] = $array[-1].ToUpper()
+        $array[ - 1] = $array[ - 1].ToUpper()
         $array += $numbers | Get-Random -Count $NumberOfNumbers
         $array += $specialCharacters.Split(',') | Get-Random -Count $NumberOfSpecialCharacters
         $This.Password = ($array | Get-Random -Count $array.Count) -join ""
+    }
+
+    [Boolean] IsAdUserExist ()
+    {
+        $GetParams = @{
+            Identity = $This.SamAccountName
+        }
+
+        try
+        {
+            Get-ADUser @GetParams
+            return $true
+        }
+        catch
+        {
+            Return $false
+        }
     }
 
     [System.String] FormatString ([System.String]$Value, [FormatType]$Format)
@@ -107,5 +160,18 @@ class USER
     [System.String] RemoveStringLatinCharacter ([string]$String)
     {
         return ([Text.Encoding]::ASCII.GetString([Text.Encoding]::GetEncoding("Cyrillic").GetBytes($String)))
+    }
+}
+
+class HMUSER : USER
+{
+    HMUSER ()
+    {
+
+    }
+
+    HMUSER ([System.String]$GivenName, [System.String]$SurName) : base ($GivenName, $SurName)
+    {
+        $this.SamAccountName = $this.SurName + " " + $this.GivenName
     }
 }
