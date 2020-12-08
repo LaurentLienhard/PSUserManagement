@@ -14,6 +14,8 @@ class USER
     [System.String]$Domain
     [System.String]$Password
     [System.String]$UID
+    [System.String]$UPN
+    [System.String]$VHDXFullPath
 
     USER([System.String]$GivenName, [System.String]$SurName)
     {
@@ -57,7 +59,65 @@ class USER
 
     }
 
+
+    [void] GetUpn ()
+    {
+        if ($This.IsAdUserExist())
+        {
+            $This.UPN = (get-AdUser -Identity $This.SamAccountName -Properties UserPrincipalName | Select-Object -ExpandProperty UserPrincipalName).Split("@")[1]
+        }
+    }
+
     [Double] GetVHDXProfileSize ([System.String]$Path)
+    {
+        $This.SetVHDXFullPath($Path)
+        return (Get-Item $This.VHDXFullPath).length / 1GB
+
+
+    }
+
+    [void] CleanVHDXProfile ([System.String]$Path)
+    {
+        $This.SetVHDXFullPath($Path)
+
+        $DriveLetter = (Mount-VHD -Path $This.VHDXFullPath -PassThru | Get-Disk | Get-Partition | Get-Volume).DriveLetter
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\Mozilla\Firefox\Profiles\*.default*\cache\*") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\Mozilla\Firefox\Profiles\*.default*\cache\*.*") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\Mozilla\Firefox\Profiles\*.default*\cache2\entries\*.*") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\Mozilla\Firefox\Profiles\*.default*\thumbnails\*") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\Mozilla\Firefox\Profiles\*.default*\cookies.sqlite") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\Mozilla\Firefox\Profiles\*.default*\webappsstore.sqlite") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\Mozilla\Firefox\Profiles\*.default*\chromeappsstore.sqlite") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\Google\Chrome\User Data\Default\Cache\*") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\Google\Chrome\User Data\Default\Cache2\entries\*") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\Google\Chrome\User Data\Default\Cookies") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\Google\Chrome\User Data\Default\Media Cache") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\Google\Chrome\User Data\Default\Cookies-Journal") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\Microsoft\Windows\Temporary Internet Files\*") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\Microsoft\Windows\WER\*") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\Temp\*") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\GoToMeeting") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+
+
+        Remove-Item -Path ($DriveLetter + ":\AppData\Roaming\Microsoft\teams\blob_storage") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Roaming\Microsoft\teams\databases") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Roaming\Microsoft\teams\databases") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Roaming\Microsoft\teams\cache") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Roaming\Microsoft\teams\gpucache") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Roaming\Microsoft\teams\application cache\cache") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Roaming\Microsoft\teams\Indexeddb") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Roaming\Microsoft\teams\Local Storage") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Roaming\Microsoft\teams\tmp") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Roaming\Microsoft\Teams\Service Worker\CacheStorage") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-Item -Path ($DriveLetter + ":\AppData\Local\Microsoft\Teams\previous") -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+
+        Dismount-VHD -Path $this.VHDXFullPath
+    }
+
+    [void] SetVHDXFullPath ([System.String]$Path)
     {
         if (!(Test-Path -Path $Path))
         {
@@ -73,16 +133,12 @@ class USER
         $VHDXFileName = "UVHD-" + $this.UID + ".vhdx"
         if (Get-ChildItem -Path $Path -Include $VHDXFileName)
         {
-            $VHDXFullPath = (Join-Path -Path $Path -ChildPath $VHDXFileName)
-            return (Get-Item $VHDXFullPath).length / 1GB
+            $this.VHDXFullPath = (Join-Path -Path $Path -ChildPath $VHDXFileName)
         }
         else
         {
             Write-Warning "The profile file is not in the directory"
-            return 0
         }
-
-
     }
 
     [Void] GeneratePassword ([Int]$NumberOfAlphabets, [Int]$NumberOfNumbers, [Int]$NumberOfSpecialCharacters)
@@ -126,10 +182,12 @@ class USER
         try
         {
             Get-ADUser @GetParams
+            Write-verbose "[CLASS USER][ISADUSEREXIST] User $($this.SamAccountName) found in Active Directory "
             return $true
         }
         catch
         {
+            Write-Warning "[CLASS USER][ISADUSEREXIST] User $($this.Samaccountname) not found in Active Directory "
             Return $false
         }
     }
